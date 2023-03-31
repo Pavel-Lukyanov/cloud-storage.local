@@ -14,6 +14,7 @@ $urlList = [
     ],
     '/users/' => [
         'GET' => 'UserClass::showUsers',
+        'POST' => 'UserClass::addUser',
     ],
 ];
 
