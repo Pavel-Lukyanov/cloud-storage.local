@@ -1,19 +1,20 @@
 <?php
 
-require_once '../pdoconfig.php';
-
-// Класс UserClass должен быть определен в файле './entities/UserClass.php'
 class UserClass
 {
-    public function showUsers()
+    static public function showUsers()
     {
-        $statement = $connection->prepare('SELECT * FROM users');
-        
-
+        global $connection;
+        $statement = $connection->query("SELECT * FROM user");
+        $statement->execute();
+        $data=[];
+        $data = $statement->fetchAll();
+        $connection = null; // закрываем подключение к базе данных
+        echo '<pre>'; var_dump($data); echo '</pre>';
     }
 
-    public function addUser()
+    static public function addUser()
     {
-        return 'Adding user';
+        echo 'add class user';
     }
 }

@@ -1,40 +1,40 @@
 <?php
 
+try {
+    $connection = new PDO('mysql:host=localhost;dbname=cloud_storage;charset=utf8', 'root', '');
+} catch (\PDOException $e) {
+    echo $e->getMessage();
+}
 
+require_once './autoload.php';
 
-
-
-
-// Подключаем autoload.
-require_once __DIR__ . '/autoload.php';
-
-// Объявляем список URL и соответствующих запросов.
 $urlList = [
-    '/users/' => [
-        'GET' => 'showUsers',
+    '/' => [
+        'GET' => 'MainClass::show',
     ],
     '/users/' => [
-        'POST' => 'addUser',
+        'GET' => 'UserClass::showUsers',
     ],
 ];
 
-// Определяем HTTP-метод и запрашиваемый URL.
-$httpMethod = $_SERVER['REQUEST_METHOD'];
-$requestUri = $_SERVER['REQUEST_URI'];
 
-// Удаляем GET-параметры из URL.
-if (($pos = strpos($requestUri, '?')) !== false) {
-    $requestUri = substr($requestUri, 0, $pos);
-}
+$url = $_SERVER['REQUEST_URI'];
+$method = $_SERVER['REQUEST_METHOD'];
 
-// Ищем соответствующий URL в списке.
-if (isset($urlList[$requestUri][$httpMethod])) {
+if (isset($urlList[$url][$method])) {
+    $handler = $urlList[$url][$method];
+    $parts = explode('::', $handler);
+    $className = $parts[0];
+    $methodName = $parts[1];
 
-    $handler = $urlList[$requestUri][$httpMethod];
-    $result = call_user_func([new UserClass(), $handler]);
-    echo $result;
+
+    if (class_exists($className) && method_exists($className, $methodName)) {
+        call_user_func(array($className, $methodName));
+    } else {
+        http_response_code(404);
+        echo 'Метод класса не существует';
+    }
 } else {
-    // URL не найден в списке.
     http_response_code(404);
     echo '404 Not Found';
 }
