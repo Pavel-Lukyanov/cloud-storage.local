@@ -12,10 +12,14 @@ $urlList = [
     '/' => [
         'GET' => 'MainClass::show',
     ],
-    '/users/' => [
+    '/user/' => [
         'GET' => 'UserClass::showUsers',
         'POST' => 'UserClass::addUser',
+        'PUT' => 'UserClass::updateUser',
     ],
+    '/users/:id' =>[
+        'GET' => 'UserClass::getUser',
+    ]
 ];
 
 
