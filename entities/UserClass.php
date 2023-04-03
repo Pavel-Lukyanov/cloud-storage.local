@@ -15,21 +15,23 @@ class UserClass
 
     static public function addUser()
     {
-        if (!empty($_POST['email']) && !empty($_POST['password'])) {
+        if (!empty($_POST['email']) && !empty($_POST['password']) && !empty($_POST['role'])) {
             $email = htmlspecialchars($_POST['email']);
             $password = htmlspecialchars($_POST['password']);
+            $role = htmlspecialchars($_POST['role']);
             $password = password_hash($password, PASSWORD_DEFAULT);
             global $connection;
-            $statement = $connection->prepare("INSERT INTO users(id, email, password) values(null, :email, :password)");
-            $statement->execute(['email' => $email, 'password' => $password]);
+            $statement = $connection->prepare("INSERT INTO users (id, email, password, role) values(null, :email, :password, :role)");
+            $statement->execute(['email' => $email, 'password' => $password, 'role' => $role]);
         } else {
             echo "error";
         }
     }
 
-    static public function getUser($id)
+    static public function getUser($matches)
     {
-        
+        $id = $matches[0];
+        echo $id;
     }
 
     static public function updateUser()
