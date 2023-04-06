@@ -26,14 +26,10 @@ $urlList = [
 
 $url = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
-$parts = explode('/', $url);
-if (preg_match('#^/users/(\d+)$#', $url, $matches)) {
-    $params = $matches[1];
-} else {
-    $params = end($parts);
-}
 
-if (isset($urlList[$url][$method][$params])) {
+$id = end(explode("/", $url));
+
+if (isset($urlList[$url][$method])) {
     $handler = $urlList[$url][$method];
     $parts = explode('::', $handler);
     $className = $parts[0];
