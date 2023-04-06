@@ -9,7 +9,7 @@ class UserClass
         $statement->execute();
         $data = [];
         $data = $statement->fetchAll();
-        $connection = null; // закрываем подключение к базе данных
+        $connection = null;
         echo json_encode($data);
     }
 
@@ -28,10 +28,12 @@ class UserClass
         }
     }
 
-    static public function getUser($matches)
+    static public function getUser()
     {
-        $id = $matches[0];
-        echo $id;
+        $url = $_SERVER['REQUEST_URI'];
+        $parts = explode('/', $url);
+        $user_id = $parts[sizeof($parts) - 1]; // Извлекаем id пользователя из URL
+        echo $user_id;
     }
 
     static public function updateUser()
@@ -53,5 +55,12 @@ class UserClass
         } else {
             echo "error";
         }
+    }
+
+    static public function deleteUser($id)
+    {
+        global $connection;
+        $statement = $connection->prepare('DELETE FROM users where id = :id');
+        $statement->execute(['id' => $id]);
     }
 }

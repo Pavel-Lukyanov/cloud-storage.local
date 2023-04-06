@@ -16,8 +16,9 @@ $urlList = [
         'GET' => 'UserClass::showUsers',
         'POST' => 'UserClass::addUser',
         'PUT' => 'UserClass::updateUser',
+        'DELETE' => 'UserClass::deleteUser',
     ],
-    '/users\/(\d+)/' => [
+    '/users/{id}' => [
         'GET' => 'UserClass::getUser',
     ]
 ];
@@ -25,13 +26,18 @@ $urlList = [
 
 $url = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
+$parts = explode('/', $url);
+if (preg_match('#^/users/(\d+)$#', $url, $matches)) {
+    $params = $matches[1];
+} else {
+    $params = end($parts);
+}
 
-if (isset($urlList[$url][$method])) {
+if (isset($urlList[$url][$method][$params])) {
     $handler = $urlList[$url][$method];
     $parts = explode('::', $handler);
     $className = $parts[0];
     $methodName = $parts[1];
-
 
     if (class_exists($className) && method_exists($className, $methodName)) {
         call_user_func(array($className, $methodName));
