@@ -18,7 +18,7 @@ $urlList = [
         'PUT' => 'UserClass::updateUser',
         'DELETE' => 'UserClass::deleteUser',
     ],
-    '/users/{id}' => [
+    '/users/{id:[0-9]+}' => [
         'GET' => 'UserClass::getUser',
     ]
 ];
@@ -29,7 +29,13 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 $id = end(explode("/", $url));
 
-if (isset($urlList[$url][$method])) {
+if (empty($id)) {
+    $id = null;
+}
+
+/* var_dump($id); */
+
+if (isset($urlList[$url][$method][$id])) {
     $handler = $urlList[$url][$method];
     $parts = explode('::', $handler);
     $className = $parts[0];

@@ -1,6 +1,10 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteCond %{SCRIPT_FILENAME} !-d
-    RewriteCond %{SCRIPT_FILENAME} !-f
-    RewriteRule ^(.*)$ ./index.php?route=$1 [QSA,L]
+     RewriteCond %{SCRIPT_FILENAME} !-d
+     RewriteCond %{SCRIPT_FILENAME} !-f
+     RewriteRule ^(.*)$ ./index.php?route=$1 [QSA,L]
+
+    #RewriteCond %{REQUEST_FILENAME} !-d
+   # RewriteCond %{REQUEST_FILENAME} !-f
+    #RewriteRule ^(.+)$ ./index.php?q=$1 [L, QSA]
 </IfModule>

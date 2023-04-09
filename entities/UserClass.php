@@ -30,10 +30,11 @@ class UserClass
 
     static public function getUser()
     {
-        $url = $_SERVER['REQUEST_URI'];
+        echo 'getUser';
+       /*  $url = $_SERVER['REQUEST_URI'];
         $parts = explode('/', $url);
         $user_id = $parts[sizeof($parts) - 1]; // Извлекаем id пользователя из URL
-        echo $user_id;
+        echo $user_id; */
     }
 
     static public function updateUser()
