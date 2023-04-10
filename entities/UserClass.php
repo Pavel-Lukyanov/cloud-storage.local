@@ -28,9 +28,9 @@ class UserClass
         }
     }
 
-    static public function getUser()
+    static public function getUser($param)
     {
-        echo 'getUser';
+        echo $param['val'];
        /*  $url = $_SERVER['REQUEST_URI'];
         $parts = explode('/', $url);
         $user_id = $parts[sizeof($parts) - 1]; // Извлекаем id пользователя из URL
