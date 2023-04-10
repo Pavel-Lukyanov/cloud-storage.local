@@ -18,7 +18,7 @@ $urlList = [
         'PUT' => 'UserClass::updateUser',
         'DELETE' => 'UserClass::deleteUser',
     ],
-    '/users/(?<id>\d+)' => [
+    '/users/{id}' => [
         'GET' => 'UserClass::getUser',
     ]
 ];
