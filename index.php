@@ -8,6 +8,30 @@ try {
 
 require_once './autoload.php';
 
+/* $routes = include 'routes.php';
+
+$url = $_SERVER['REQUEST_URI'];
+$method = $_SERVER['REQUEST_METHOD'];
+
+
+if (isset($routes[$url][$method])) {
+    $handler = $routes[$url][$method];
+    $parts = explode('::', $handler);
+    $className = $parts[0];
+    $methodName = $parts[1];
+
+    if (class_exists($className) && method_exists($className, $methodName)) {
+        call_user_func(array($className, $methodName));
+    } else {
+        http_response_code(404);
+        echo 'Метод класса не существует';
+    }
+} else {
+    http_response_code(404);
+    echo '404 Not Found';
+} */
+
+
 $routes = include 'routes.php';
 $url = parse_url($_SERVER['REQUEST_URI']);
 $urlParts = explode("/", $url['path']);
