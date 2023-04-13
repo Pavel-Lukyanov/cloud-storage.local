@@ -1,12 +1,12 @@
 <?php
 return array(
     '/user/' => [
-        'GET' => 'UserClass::getUser',
+        'GET' => 'UserClass::showUsers',
         'POST' => 'UserClass::addUser',
         'PUT' => 'UserClass::updateUser',
         'DELETE' => 'UserClass::deleteUser',
     ],
     '/users/' => [
-        'GET' => 'UserClass::showUsers',
+        'GET' => 'UserClass::getUser',
     ]
 );
