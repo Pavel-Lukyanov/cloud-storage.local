@@ -25,7 +25,7 @@ class UserClass
     static public function addUser()
     {
         try {
-            if (!empty($_POST['email']) && !empty($_POST['password']) && !empty($_POST['role'])) {
+            if (isset($_POST['email'], $_POST['password'], $_POST['role'])) {
                 $email = htmlspecialchars($_POST['email']);
                 $password = htmlspecialchars($_POST['password']);
                 $role = htmlspecialchars($_POST['role']);
@@ -79,22 +79,17 @@ class UserClass
 
     static public function updateUser()
     {
-        parse_str(file_get_contents("php://input"), $PUT);
-
-        var_dump($PUT);
-        /* try {
+        try {
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
             $user_id = $parts[sizeof($parts) - 1];
-            parse_str(file_get_contents("php://input"), $PUT);
+            $data = json_decode(file_get_contents("php://input"), true);
 
-            var_dump($PUT);
-
-            if (!empty($PUT['email'] && !empty($PUT['role']))) {
-                $email = htmlspecialchars($PUT['email']);
-                $role = htmlspecialchars($PUT['role']);
+            if (!empty($data['email']) && !empty($data['role'])) {
+                $email = htmlspecialchars($data['email']);
+                $role = htmlspecialchars($data['role']);
                 global $connection;
-                $statement = $connection->prepare('UPDATE user SET email = :email, role = :role WHERE id = :id');
+                $statement = $connection->prepare('UPDATE users SET email = :email, role = :role WHERE id = :id');
                 $statement->execute(['email' => $email, 'role' => $role, 'id' => $user_id]);
 
                 // Возвращаем успешный ответ с обновленными данными пользователя
@@ -104,22 +99,38 @@ class UserClass
                 header('HTTP/1.1 200 OK');
                 header('Content-Type: application/json');
                 echo json_encode($data);
+            } else {
+                // Исключение, если недостаточно данных
+                throw new Exception('Не хватает данных');
             }
         } catch (PDOException $e) {
-            throw new Exception('Не все данные были переданы!');
+            // Ошибка базы данных
+            echo "Ошибка базы данных: " . $e->getMessage();
+        } catch (Exception $e) {
+            // Остальные ошибки, включая исключение "Не хватает данных"
+            echo "Ошибка: " . $e->getMessage();
+        }
+    }
+
+    static public function deleteUser()
+    {
+        try {
+            $url = $_SERVER['REQUEST_URI'];
+            $parts = explode('/', $url);
+            $user_id = $parts[sizeof($parts) - 1];
+
+            global $connection;
+            $statement = $connection->prepare('DELETE FROM users where id = :id');
+            $statement->execute(['id' => $user_id]);
+
+            // Устанавливаем HTTP-статус "204 No Content"
+            http_response_code(204);
         } catch (PDOException $e) {
             // Ошибка базы данных
             echo "Ошибка базы данных: " . $e->getMessage();
         } catch (Exception $e) {
             // Остальные ошибки
             echo "Ошибка: " . $e->getMessage();
-        } */
-    }
-
-    static public function deleteUser($id)
-    {
-        global $connection;
-        $statement = $connection->prepare('DELETE FROM users where id = :id');
-        $statement->execute(['id' => $id]);
+        }
     }
 }
