@@ -6,6 +6,9 @@ return array(
         'PUT' => 'UserClass::updateUser',
         'DELETE' => 'UserClass::deleteUser',
     ],
+    '/login/' => [
+        'POST' => 'UserClass::loginUser',
+    ],
     '/users/' => [
         'GET' => 'UserClass::getUser',
     ]

@@ -133,4 +133,19 @@ class UserClass
             echo "Ошибка: " . $e->getMessage();
         }
     }
+
+    static public function loginUser()
+    {
+        $username = htmlspecialchars($_POST['login']);
+        $password = htmlspecialchars($_POST['password']);
+        $password = password_hash($password, PASSWORD_DEFAULT);
+
+        global $connection;
+        $statement = $connection->query('SELECT id, email FROM users WHERE email :email AND password :password');
+        $statement->execute();
+        $data = [];
+        $data = $statement->fetchAll();
+        echo '<pre>'; var_dump($data); echo '</pre>';
+        $connection = null;
+    }
 }
