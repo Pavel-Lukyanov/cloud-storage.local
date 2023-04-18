@@ -25,11 +25,12 @@ class UserClass
     static public function addUser()
     {
         try {
-            if (isset($_POST['email'], $_POST['password'], $_POST['role'])) {
-                $email = htmlspecialchars($_POST['email']);
-                $password = htmlspecialchars($_POST['password']);
-                $role = htmlspecialchars($_POST['role']);
-                $password = password_hash($password, PASSWORD_DEFAULT);
+            $data = json_decode(file_get_contents("php://input"), true);
+            if ((isset($data['email'], $data['password'], $data['role'])) && (!empty(trim($data['email'])) && !empty(trim($data['password'])) && !empty(trim($data['role'])))) {
+
+                $email = htmlspecialchars(trim($data['email']));
+                $role = htmlspecialchars(trim($data['role']));
+                $password = password_hash($data['password'], PASSWORD_DEFAULT);
                 global $connection;
                 $statement = $connection->prepare("INSERT INTO users (id, email, password, role) values(null, :email, :password, :role)");
                 $statement->execute(['email' => $email, 'password' => $password, 'role' => $role]);
@@ -47,10 +48,10 @@ class UserClass
                 throw new Exception('Не все данные были переданы!');
             }
         } catch (PDOException $e) {
-            echo "Ошибка базы данных: " . $e->getMessage();
+            echo "Error data base: " . $e->getMessage();
         } catch (Exception $e) {
             // Остальные ошибки
-            echo "Ошибка: " . $e->getMessage();
+            echo "Error: " . $e->getMessage();
         }
     }
 
@@ -62,8 +63,8 @@ class UserClass
             $parts = explode('/', $url);
             $user_id = $parts[sizeof($parts) - 1]; // Извлекаем id пользователя из URL
             global $connection;
-            $statement = $connection->query("SELECT id, email FROM users WHERE id = {$user_id}");
-            $statement->execute();
+            $statement = $connection->query("SELECT id, email FROM users WHERE id = :id");
+            $statement->execute(['id' => $user_id]);
             $data = [];
             $data = $statement->fetchAll();
             $connection = null;
@@ -105,10 +106,10 @@ class UserClass
             }
         } catch (PDOException $e) {
             // Ошибка базы данных
-            echo "Ошибка базы данных: " . $e->getMessage();
+            echo "Error data base: " . $e->getMessage();
         } catch (Exception $e) {
             // Остальные ошибки, включая исключение "Не хватает данных"
-            echo "Ошибка: " . $e->getMessage();
+            echo "Error: " . $e->getMessage();
         }
     }
 
@@ -127,25 +128,76 @@ class UserClass
             http_response_code(204);
         } catch (PDOException $e) {
             // Ошибка базы данных
-            echo "Ошибка базы данных: " . $e->getMessage();
+            echo "Error data base: " . $e->getMessage();
         } catch (Exception $e) {
             // Остальные ошибки
-            echo "Ошибка: " . $e->getMessage();
+            echo "Error: " . $e->getMessage();
         }
     }
 
     static public function loginUser()
     {
-        $username = htmlspecialchars($_POST['login']);
-        $password = htmlspecialchars($_POST['password']);
-        $password = password_hash($password, PASSWORD_DEFAULT);
+        try {
+            $data = json_decode(file_get_contents("php://input"), true);
 
-        global $connection;
-        $statement = $connection->query('SELECT id, email FROM users WHERE email :email AND password :password');
-        $statement->execute();
-        $data = [];
-        $data = $statement->fetchAll();
-        echo '<pre>'; var_dump($data); echo '</pre>';
-        $connection = null;
+            if ((isset($data['email'], $data['password']))  && (!empty(trim($data['email'])) && !empty(trim($data['password'])))) {
+                $email = htmlspecialchars($data['email']);
+                $password = trim($data['password']);
+
+                global $connection;
+                $statement = $connection->prepare("SELECT id, password FROM users WHERE email = :email");
+                $statement->execute(['email' => $email]);
+                $user = $statement->fetch(PDO::FETCH_ASSOC);
+
+                if (!password_verify($password, $user['password'])) {
+                    http_response_code(401);
+                    echo 'Error: Login information not provided';
+                    return;
+                    $connection = null;
+                }
+
+                $bytes = random_bytes(32);
+                // Хешируем сгенерированную последовательность байт с помощью SHA-256
+                $token = hash('sha256', $bytes);
+                $expires_in = time() + (24 * 60 * 60);
+                $expiration_time = date('Y-m-d H:i:s', $expires_in);
+
+                $statement = $connection->prepare("INSERT INTO user_tokens (id, user_id, token, expiration_time) values(null, :user_id, :token, :expiration_time)");
+                $statement->execute(['user_id' => $user['id'], 'token' => $token, 'expiration_time' => $expiration_time]);
+                $connection = null;
+
+                $response = ['access_token' => $token, 'token_type' => 'Bearer', 'expires_in' => 3600];
+                echo json_encode($response);
+            } else {
+                http_response_code(400);
+                echo 'Error: Login information not provided';
+            }
+        } catch (Exception $e) {
+            // Остальные ошибки
+            echo "Error: " . $e->getMessage();
+        }
+    }
+
+    static public function logoutUser()
+    {
+        try {
+            $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : (isset($_SERVER['HTTP_X_AUTHORIZATION']) ? $_SERVER['HTTP_X_AUTHORIZATION'] : null);
+            if (empty($authHeader)) {
+                return http_response_code(400);
+            }
+            $bearerToken = explode(" ", $authHeader);
+            if (count($bearerToken) < 2 || !isset($bearerToken[1])) {
+                return http_response_code(400);
+            }
+            $accessToken = $bearerToken[1];
+
+            global $connection;
+            $statement = $connection->prepare('DELETE FROM user_tokens WHERE token = :token');
+            $statement->execute(['token' => $accessToken]);
+
+            return "[OK]";
+        } catch (PDOException $e) {
+            return http_response_code(500);
+        }
     }
 }

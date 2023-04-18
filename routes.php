@@ -9,6 +9,9 @@ return array(
     '/login/' => [
         'POST' => 'UserClass::loginUser',
     ],
+    '/logout/' => [
+        'GET' => 'UserClass::logoutUser',
+    ],
     '/users/' => [
         'GET' => 'UserClass::getUser',
     ]
