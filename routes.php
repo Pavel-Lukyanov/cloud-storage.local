@@ -12,6 +12,9 @@ return array(
     '/logout/' => [
         'GET' => 'UserClass::logoutUser',
     ],
+    '/reset-password/' => [
+        'POST' => 'UserClass::resetPassword',
+    ],
     '/users/' => [
         'GET' => 'UserClass::getUser',
     ]

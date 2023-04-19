@@ -200,4 +200,49 @@ class UserClass
             return http_response_code(500);
         }
     }
+
+    static public function resetPassword()
+    {
+        $data = json_decode(file_get_contents("php://input"), true);
+        $email = htmlspecialchars(trim($data['email']));
+        if (empty($email)) {
+            http_response_code(400);
+            echo 'Error: Login information not provided';
+            return;
+        }
+
+        try {
+            global $connection;
+            $statement = $connection->prepare("SELECT email, id FROM users WHERE email = :email");
+            $statement->execute(['email' => $email]);
+            $user = $statement->fetch(PDO::FETCH_ASSOC); // извлечение данных из запроса
+            if (!empty($user)) {
+                $bytes = random_bytes(32);
+                $token = hash('sha256', $bytes);
+                $expires_in = time() + (1 * 60 * 60);
+                $expiration_time = date('Y-m-d H:i:s', $expires_in);
+                $statement = $connection->prepare("INSERT INTO user_tokens (id, user_id, token, expiration_time) values(null, :user_id, :token, :expiration_time)");
+                $statement->execute(['user_id' => $user['id'], 'token' => $token, 'expiration_time' => $expiration_time]);
+                $connection = null;
+
+                // Отправляем запрос на другой endpoint API для отправки письма
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, "http://cloud-storage.local/sendmail.php");
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('token' => $token, 'email' => $email)));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+                $response = curl_exec($ch);
+                echo json_encode($response);
+
+                curl_close($ch);
+            } else {
+                http_response_code(404);
+                echo "Error: User with this email was not found";
+            }
+        } catch (PDOException $e) {
+            echo "Connection failed:" . $e->getMessage();
+        }
+        $connection = null;
+    }
 }
