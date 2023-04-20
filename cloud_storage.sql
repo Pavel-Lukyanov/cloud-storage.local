@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Апр 18 2023 г., 22:02
+-- Время создания: Апр 20 2023 г., 08:57
 -- Версия сервера: 8.0.30
 -- Версия PHP: 8.1.9
 
@@ -29,9 +29,9 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `users` (
   `id` int NOT NULL,
-  `role` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `email` varchar(155) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `password` varchar(155) COLLATE utf8mb4_unicode_ci NOT NULL
+  `role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(155) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(155) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -43,7 +43,9 @@ INSERT INTO `users` (`id`, `role`, `email`, `password`) VALUES
 (3, 'user', 'alexander@mail.ru', '$2y$10$EFUdjfoRpVNvbeQHHPOSD.JHRyN5oE.TE/9rdxk7PO6oPdDk4xrm.'),
 (4, 'user', 'test2@mail.ru', '$2y$10$xsfB.zs824GEAH55KG4T5OgpQOsQl17Ft2Ci08o0k/1d493Gkb1zy'),
 (5, 'user', 'test2@mail.ru', '$2y$10$0lzh7z9ATO3d3soKvZf3G.cfqpBVQWvYt40PsV8iClsMq08WZu3Ru'),
-(6, 'user', 'test3@mail.ru', '$2y$10$r4ekfqo8YhCucEB/ylrx6.ffZ0dxP5IxsbKLrrQctM1X977JoX0au');
+(6, 'user', 'test3@mail.ru', '$2y$10$r4ekfqo8YhCucEB/ylrx6.ffZ0dxP5IxsbKLrrQctM1X977JoX0au'),
+(7, 'user', 'PavelAlexandrov1234', '$2y$10$rPeti3tzY6YBmtURWWZhfOt8fqgRyzEy3iJXnPJV83TKQ50ERs6RC'),
+(8, 'user', 'PavelAlexandrov86@yandex.ru', '$2y$10$KIu1Fezu/OqnRf0CSREEK.X.lPUkymR0P8I61USBOUNoOhRFFws4G');
 
 -- --------------------------------------------------------
 
@@ -54,7 +56,7 @@ INSERT INTO `users` (`id`, `role`, `email`, `password`) VALUES
 CREATE TABLE `user_tokens` (
   `id` int NOT NULL,
   `user_id` int NOT NULL,
-  `token` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration_time` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -83,13 +85,13 @@ ALTER TABLE `user_tokens`
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT для таблицы `user_tokens`
 --
 ALTER TABLE `user_tokens`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Ограничения внешнего ключа сохраненных таблиц
