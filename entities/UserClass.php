@@ -22,6 +22,7 @@ class UserClass
         }
     }
 
+    // Создание нового пользователя
     static public function addUser()
     {
         try {
@@ -30,7 +31,8 @@ class UserClass
 
                 $email = htmlspecialchars(trim($data['email']));
                 $role = htmlspecialchars(trim($data['role']));
-                $password = password_hash($data['password'], PASSWORD_DEFAULT);
+                $password = trim($data['password']);
+                $password = password_hash($password, PASSWORD_DEFAULT);
                 global $connection;
                 $statement = $connection->prepare("INSERT INTO users (id, email, password, role) values(null, :email, :password, :role)");
                 $statement->execute(['email' => $email, 'password' => $password, 'role' => $role]);
@@ -55,7 +57,7 @@ class UserClass
         }
     }
 
-    //Пользователь по id
+    // Получение пользователя по id
     static public function getUser()
     {
         try {
@@ -78,6 +80,7 @@ class UserClass
         }
     }
 
+    // Обновление данных пользователя
     static public function updateUser()
     {
         try {
@@ -113,6 +116,7 @@ class UserClass
         }
     }
 
+    //Удаление пользователя
     static public function deleteUser()
     {
         try {
@@ -135,6 +139,7 @@ class UserClass
         }
     }
 
+    // Аутентификация пользователя
     static public function loginUser()
     {
         try {
@@ -178,6 +183,7 @@ class UserClass
         }
     }
 
+    // logout пользователя
     static public function logoutUser()
     {
         try {
@@ -201,6 +207,7 @@ class UserClass
         }
     }
 
+    //Запрос на изменение пароля (отправляем письмо на почту)
     static public function resetPassword()
     {
         $data = json_decode(file_get_contents("php://input"), true);
@@ -244,5 +251,49 @@ class UserClass
             echo "Connection failed:" . $e->getMessage();
         }
         $connection = null;
+    }
+
+    // Ввод нового пароля и прверка токена с почты
+    static public function newPassword()
+    {
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (empty(htmlspecialchars(trim($data['token']))) || empty(trim($data['password']))) {
+            http_response_code(400);
+            echo 'Error: Access to change password denied';
+            return;
+        } else {
+            $token = htmlspecialchars(trim($data['token']));
+            $password = password_hash(trim($data['password']), PASSWORD_DEFAULT);
+            global $connection;
+            $statement = $connection->prepare("SELECT user_id, expiration_time FROM user_tokens WHERE token = :token");
+            $statement->execute(['token' => $token]);
+            $data = $statement->fetch(PDO::FETCH_ASSOC);
+
+            if (!empty($data)) {
+                $created_at_datetime = DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration_time']);
+                $current_time = new DateTime();
+
+
+                if (($current_time->getTimestamp() > $created_at_datetime->getTimestamp()) ) {
+                    // Токен устарел
+                    $statement = $connection->prepare('DELETE FROM user_tokens WHERE token = :token');
+                    $statement->execute(['token' => $token]);
+                    http_response_code(400);
+                    echo 'Error: Access to change password denied';
+                } else {
+                    // Срок жизни токена не истек
+                    $statement = $connection->prepare('UPDATE users SET password = :password WHERE id = :id');
+                    $statement->execute(['password' => $password, 'id' => $data['user_id']]);
+                    // Возвращаем успешный ответ
+                    header('HTTP/1.1 200 OK');
+                    header('Content-Type: application/json');
+                    echo 'Password changed successfully';
+                }
+            } else {
+                http_response_code(400);
+                echo 'Error: Access to change password denied';
+                return;
+            }
+        }
     }
 }

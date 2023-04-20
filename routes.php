@@ -15,6 +15,9 @@ return array(
     '/reset-password/' => [
         'POST' => 'UserClass::resetPassword',
     ],
+    '/new-password/' => [
+        'POST' => 'UserClass::newPassword',
+    ],
     '/users/' => [
         'GET' => 'UserClass::getUser',
     ]
