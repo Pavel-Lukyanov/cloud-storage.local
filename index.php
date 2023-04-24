@@ -8,7 +8,7 @@ try {
 
 require_once './autoload.php';
 
-$routes = include 'routes.php';
+$routes = include './routes/routes.php';
 
 //Получаем url
 $url = $_SERVER['REQUEST_URI'];

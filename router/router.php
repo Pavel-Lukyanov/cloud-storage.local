@@ -4,7 +4,7 @@ class Router
 {
     public function __construct()
     {
-        $routes = include 'routes.php';
+        $routes = include './routes/routes.php';
         $url = parse_url($_SERVER['REQUEST_URI']);
         $urlParts = explode("/", $url['path']);
         $urlParams = [];

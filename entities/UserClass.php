@@ -28,10 +28,9 @@ class UserClass
         try {
             $data = json_decode(file_get_contents("php://input"), true);
             if ((isset($data['email'], $data['password'], $data['role'])) && (!empty(trim($data['email'])) && !empty(trim($data['password'])) && !empty(trim($data['role'])))) {
-
                 $email = htmlspecialchars(trim($data['email']));
                 $role = htmlspecialchars(trim($data['role']));
-                $password = trim($data['password']);
+                $password = htmlspecialchars(trim($data['password']));
                 $password = password_hash($password, PASSWORD_DEFAULT);
                 global $connection;
                 $statement = $connection->prepare("INSERT INTO users (id, email, password, role) values(null, :email, :password, :role)");
@@ -64,16 +63,20 @@ class UserClass
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
             $user_id = $parts[sizeof($parts) - 1]; // Извлекаем id пользователя из URL
-            global $connection;
-            $statement = $connection->query("SELECT id, email FROM users WHERE id = :id");
-            $statement->execute(['id' => $user_id]);
-            $data = [];
-            $data = $statement->fetchAll();
-            $connection = null;
-            if (empty($data)) {
-                throw new Exception("User with id {$user_id} not found!");
+            if (!empty(htmlspecialchars(trim($user_id)))) {
+                global $connection;
+                $statement = $connection->prepare("SELECT id, email FROM users WHERE id = :id");
+                $statement->execute(['id' => $user_id]);
+                $data = [];
+                $data = $statement->fetchAll();
+                $connection = null;
+                if (empty($data)) {
+                    throw new Exception("User with id {$user_id} not found!");
+                } else {
+                    echo json_encode($data);
+                }
             } else {
-                echo json_encode($data);
+                echo "Error: user not found";
             }
         } catch (Exception $e) {
             echo "Error: " . $e->getMessage();
@@ -145,9 +148,9 @@ class UserClass
         try {
             $data = json_decode(file_get_contents("php://input"), true);
 
-            if ((isset($data['email'], $data['password']))  && (!empty(trim($data['email'])) && !empty(trim($data['password'])))) {
+            if ((isset($data['email'], $data['password']))  && (!empty(trim($data['email'])) && !empty(htmlspecialchars(trim($data['password']))))) {
                 $email = htmlspecialchars($data['email']);
-                $password = trim($data['password']);
+                $password = htmlspecialchars(trim($data['password']));
 
                 global $connection;
                 $statement = $connection->prepare("SELECT id, password FROM users WHERE email = :email");
@@ -234,7 +237,7 @@ class UserClass
 
                 // Отправляем запрос на другой endpoint API для отправки письма
                 $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, "http://cloud-storage.local/sendmail.php");
+                curl_setopt($ch, CURLOPT_URL, "http://cloud-storage.local/sendmail/sendmail.php");
                 curl_setopt($ch, CURLOPT_POST, 1);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array('token' => $token, 'email' => $email)));
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -257,13 +260,13 @@ class UserClass
     static public function newPassword()
     {
         $data = json_decode(file_get_contents("php://input"), true);
-        if (empty(htmlspecialchars(trim($data['token']))) || empty(trim($data['password']))) {
+        if (empty(htmlspecialchars(trim($data['token']))) || empty(htmlspecialchars(trim($data['password'])))) {
             http_response_code(400);
             echo 'Error: Access to change password denied';
             return;
         } else {
             $token = htmlspecialchars(trim($data['token']));
-            $password = password_hash(trim($data['password']), PASSWORD_DEFAULT);
+            $password = password_hash(htmlspecialchars(trim($data['password'])), PASSWORD_DEFAULT);
             global $connection;
             $statement = $connection->prepare("SELECT user_id, expiration_time FROM user_tokens WHERE token = :token");
             $statement->execute(['token' => $token]);
@@ -272,9 +275,7 @@ class UserClass
             if (!empty($data)) {
                 $created_at_datetime = DateTime::createFromFormat('Y-m-d H:i:s', $data['expiration_time']);
                 $current_time = new DateTime();
-
-
-                if (($current_time->getTimestamp() > $created_at_datetime->getTimestamp()) ) {
+                if (($current_time->getTimestamp() > $created_at_datetime->getTimestamp())) {
                     // Токен устарел
                     $statement = $connection->prepare('DELETE FROM user_tokens WHERE token = :token');
                     $statement->execute(['token' => $token]);
