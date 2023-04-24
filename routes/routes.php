@@ -20,5 +20,10 @@ return array(
     ],
     '/users/' => [
         'GET' => 'UserClass::getUser',
+    ],
+    '/admin/user/' => [
+        'GET' => 'AdminClass::showUsers',
+        'DELETE' => 'AdminClass::deleteUser',
+        'PUT' => 'AdminClass::updateUser',
     ]
 );

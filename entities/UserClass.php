@@ -5,6 +5,7 @@ class UserClass
     //Показать всех пользователей
     static public function showUsers()
     {
+        header('Content-Type: application/json');
         try {
             global $connection;
             $statement = $connection->query("SELECT id, email FROM users");
@@ -15,7 +16,7 @@ class UserClass
             if (empty($data)) {
                 throw new Exception("Users not found!");
             } else {
-                echo json_encode($data);
+                echo json_encode(['users' => $data]);
             }
         } catch (Exception $e) {
             echo "Error: " . $e->getMessage();
@@ -70,7 +71,7 @@ class UserClass
                 $data = [];
                 $data = $statement->fetchAll();
                 $connection = null;
-                if (empty($data)) {
+                if (empty($data) || !is_numeric($user_id)) {
                     throw new Exception("User with id {$user_id} not found!");
                 } else {
                     echo json_encode($data);
@@ -256,7 +257,7 @@ class UserClass
         $connection = null;
     }
 
-    // Ввод нового пароля и прверка токена с почты
+    // Ввод нового пароля и порверка токена с почты
     static public function newPassword()
     {
         $data = json_decode(file_get_contents("php://input"), true);
