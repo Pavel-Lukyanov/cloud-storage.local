@@ -42,27 +42,22 @@ class AdminClass
                 $statement = $connection->prepare('SELECT id, role, email FROM users WHERE id = :id');
                 $statement->execute(['id' => $user_id]);
                 $data = $statement->fetch(PDO::FETCH_ASSOC);
+                //Если роль админ
                 if ($data['role'] === 'admin') {
-                    try {
-                        global $connection;
-                        $statement = $connection->query("SELECT id, email, role FROM users");
-                        $statement->execute();
-                        $data = [];
-                        $data = $statement->fetchAll();
-                        $connection = null;
-                        if (empty($data)) {
-                            http_response_code(404);
-                            echo json_encode(['error' => 'Users not found']);
-                            return;
-                        } else {
-                            echo json_encode(['users' => $data]);
-                        }
-                    } catch (Exception $e) {
-                        echo "Error: " . $e->getMessage();
+                    $url = $_SERVER['REQUEST_URI'];
+                    $parts = explode('/', $url);
+                    $user_id = $parts[sizeof($parts) - 1]; // Извлекаем id пользователя из URL
+
+                    //Проверка на присутствие параметра в URL
+                    if (empty($user_id)) {
+                        self::showAllUsers();
+                    } else {
+                        self::getUserID($user_id);
                     }
                 } else {
                     http_response_code(400);
-                    echo 'Error: Access denied';
+                    echo json_encode(['error' => 'Access denied']);
+                    return;
                 }
                 $connection = null;
             }
@@ -70,6 +65,50 @@ class AdminClass
             http_response_code(400);
             echo 'Error: Access denied';
             return;
+        }
+    }
+
+    private static function showAllUsers()
+    {
+        try {
+            global $connection;
+            $statement = $connection->query("SELECT id, email, role FROM users");
+            $statement->execute();
+            $data = [];
+            $data = $statement->fetchAll();
+            $connection = null;
+            if (empty($data)) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Users not found']);
+                return;
+            } else {
+                echo json_encode(['users' => $data]);
+            }
+        } catch (Exception $e) {
+            echo "Error: " . $e->getMessage();
+        }
+    }
+
+    private static function getUserID($id)
+    {
+        try {
+            if (!empty(htmlspecialchars(trim($id)))) {
+                global $connection;
+                $statement = $connection->prepare("SELECT id, email, role FROM users WHERE id = :id");
+                $statement->execute(['id' => $id]);
+                $user = [];
+                $user = $statement->fetch(PDO::FETCH_ASSOC);
+                $connection = null;
+                if (empty($user) || !is_numeric($id)) {
+                    throw new Exception("User with id {$id} not found!");
+                } else {
+                    echo json_encode(['user' => $user]);
+                }
+            } else {
+                echo "Error: user not found";
+            }
+        } catch (Exception $e) {
+            echo "Error: " . $e->getMessage();
         }
     }
 

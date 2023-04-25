@@ -69,7 +69,7 @@ class UserClass
                 $statement = $connection->prepare("SELECT id, email FROM users WHERE id = :id");
                 $statement->execute(['id' => $user_id]);
                 $data = [];
-                $data = $statement->fetchAll();
+                $data = $statement->fetch(PDO::FETCH_ASSOC);
                 $connection = null;
                 if (empty($data) || !is_numeric($user_id)) {
                     throw new Exception("User with id {$user_id} not found!");
