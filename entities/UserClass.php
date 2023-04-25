@@ -129,17 +129,25 @@ class UserClass
             $user_id = $parts[sizeof($parts) - 1];
 
             global $connection;
-            $statement = $connection->prepare('DELETE FROM users where id = :id');
+            $statement = $connection->prepare('SELECT COUNT(*) FROM users WHERE id = :id');
             $statement->execute(['id' => $user_id]);
 
-            // Устанавливаем HTTP-статус "204 No Content"
-            http_response_code(204);
+            $user_exists = $statement->fetchColumn();
+
+            if ($user_exists) {
+                $statement = $connection->prepare('DELETE FROM users WHERE id = :id');
+                $statement->execute(['id' => $user_id]);
+                http_response_code(204);
+            } else {
+                http_response_code(404);
+                echo "User not found";
+            }
         } catch (PDOException $e) {
-            // Ошибка базы данных
-            echo "Error data base: " . $e->getMessage();
+            echo "Error database: " . $e->getMessage();
+            http_response_code(500);
         } catch (Exception $e) {
-            // Остальные ошибки
             echo "Error: " . $e->getMessage();
+            http_response_code(500);
         }
     }
 
