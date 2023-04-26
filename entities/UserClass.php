@@ -26,6 +26,7 @@ class UserClass
     // Создание нового пользователя
     static public function addUser()
     {
+        header('Content-Type: application/json');
         try {
             $data = json_decode(file_get_contents("php://input"), true);
             if ((isset($data['email'], $data['password'], $data['role'])) && (!empty(trim($data['email'])) && !empty(trim($data['password'])) && !empty(trim($data['role'])))) {
@@ -60,6 +61,7 @@ class UserClass
     // Получение пользователя по id
     static public function getUser()
     {
+        header('Content-Type: application/json');
         try {
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
@@ -87,6 +89,7 @@ class UserClass
     // Обновление данных пользователя
     static public function updateUser()
     {
+        header('Content-Type: application/json');
         try {
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
@@ -123,6 +126,7 @@ class UserClass
     //Удаление пользователя
     static public function deleteUser()
     {
+        header('Content-Type: application/json');
         try {
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
@@ -154,6 +158,7 @@ class UserClass
     // Аутентификация пользователя
     static public function loginUser()
     {
+        header('Content-Type: application/json');
         try {
             $data = json_decode(file_get_contents("php://input"), true);
 
@@ -198,6 +203,7 @@ class UserClass
     // logout пользователя
     static public function logoutUser()
     {
+        header('Content-Type: application/json');
         try {
             $authHeader = isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : (isset($_SERVER['HTTP_X_AUTHORIZATION']) ? $_SERVER['HTTP_X_AUTHORIZATION'] : null);
             if (empty($authHeader)) {
@@ -222,6 +228,7 @@ class UserClass
     //Запрос на изменение пароля (отправляем письмо на почту)
     static public function resetPassword()
     {
+        header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         $email = htmlspecialchars(trim($data['email']));
         if (empty($email)) {
@@ -268,6 +275,7 @@ class UserClass
     // Ввод нового пароля и порверка токена с почты
     static public function newPassword()
     {
+        header('Content-Type: application/json');
         $data = json_decode(file_get_contents("php://input"), true);
         if (empty(htmlspecialchars(trim($data['token']))) || empty(htmlspecialchars(trim($data['password'])))) {
             http_response_code(400);
