@@ -25,5 +25,8 @@ return array(
         'GET' => 'AdminClass::showUsers',
         'DELETE' => 'AdminClass::deleteUser',
         'PUT' => 'AdminClass::updateUser',
-    ]
+    ],
+    '/file/' => [
+        'POST' => 'FileClass::addFile',
+    ],
 );
