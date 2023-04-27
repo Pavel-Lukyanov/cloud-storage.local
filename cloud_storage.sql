@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Апр 20 2023 г., 08:57
+-- Время создания: Апр 27 2023 г., 11:27
 -- Версия сервера: 8.0.30
 -- Версия PHP: 8.1.9
 
@@ -24,6 +24,22 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Структура таблицы `files`
+--
+
+CREATE TABLE `files` (
+  `id` int NOT NULL,
+  `file_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` int NOT NULL,
+  `file_path` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_size` bigint NOT NULL,
+  `file_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `file_created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Структура таблицы `users`
 --
 
@@ -39,13 +55,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role`, `email`, `password`) VALUES
-(1, 'superadmin', 'test@mail.ru', '$2y$10$EFUdjfoRpVNvbeQHHPOSD.JHRyN5oE.TE/9rdxk7PO6oPdDk4xrm.'),
-(3, 'user', 'alexander@mail.ru', '$2y$10$EFUdjfoRpVNvbeQHHPOSD.JHRyN5oE.TE/9rdxk7PO6oPdDk4xrm.'),
-(4, 'user', 'test2@mail.ru', '$2y$10$xsfB.zs824GEAH55KG4T5OgpQOsQl17Ft2Ci08o0k/1d493Gkb1zy'),
-(5, 'user', 'test2@mail.ru', '$2y$10$0lzh7z9ATO3d3soKvZf3G.cfqpBVQWvYt40PsV8iClsMq08WZu3Ru'),
-(6, 'user', 'test3@mail.ru', '$2y$10$r4ekfqo8YhCucEB/ylrx6.ffZ0dxP5IxsbKLrrQctM1X977JoX0au'),
-(7, 'user', 'PavelAlexandrov1234', '$2y$10$rPeti3tzY6YBmtURWWZhfOt8fqgRyzEy3iJXnPJV83TKQ50ERs6RC'),
-(8, 'user', 'PavelAlexandrov86@yandex.ru', '$2y$10$KIu1Fezu/OqnRf0CSREEK.X.lPUkymR0P8I61USBOUNoOhRFFws4G');
+(1, 'admin', 'PavelAlexandrov86@yandex.ru', '$2y$10$EFUdjfoRpVNvbeQHHPOSD.JHRyN5oE.TE/9rdxk7PO6oPdDk4xrm.'),
+(7, 'user', 'test@yandex.ru', '$2y$10$rPeti3tzY6YBmtURWWZhfOt8fqgRyzEy3iJXnPJV83TKQ50ERs6RC'),
+(8, 'admin', 'PavelAlexandrov86@yandex.ru', '$2y$10$KIu1Fezu/OqnRf0CSREEK.X.lPUkymR0P8I61USBOUNoOhRFFws4G');
 
 -- --------------------------------------------------------
 
@@ -61,8 +73,22 @@ CREATE TABLE `user_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
+-- Дамп данных таблицы `user_tokens`
+--
+
+INSERT INTO `user_tokens` (`id`, `user_id`, `token`, `expiration_time`) VALUES
+(9, 1, '86e6e6c4fbf96fb745c526de94c232a222178236308ece97ade13623268e8ef9', '2023-04-28 07:57:36');
+
+--
 -- Индексы сохранённых таблиц
 --
+
+--
+-- Индексы таблицы `files`
+--
+ALTER TABLE `files`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Индексы таблицы `users`
@@ -82,6 +108,12 @@ ALTER TABLE `user_tokens`
 --
 
 --
+-- AUTO_INCREMENT для таблицы `files`
+--
+ALTER TABLE `files`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
@@ -91,11 +123,17 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT для таблицы `user_tokens`
 --
 ALTER TABLE `user_tokens`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Ограничения внешнего ключа сохраненных таблиц
 --
+
+--
+-- Ограничения внешнего ключа таблицы `files`
+--
+ALTER TABLE `files`
+  ADD CONSTRAINT `files_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;
 
 --
 -- Ограничения внешнего ключа таблицы `user_tokens`
