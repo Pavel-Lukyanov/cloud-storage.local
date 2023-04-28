@@ -79,27 +79,33 @@ class FileClass
                     $fileType = $_FILES['file']['type'];
 
                     global $connection;
-                    $statement = $connection->prepare('INSERT INTO files (id, user_id, file_name, file_path, file_size, file_type, file_created_at) values(NULL, :user_id, :file_name, :file_path, :file_size, :file_type, DEFAULT)');
-                    $statement->execute(['user_id' => $user['id'], 'file_name' => $fileName, 'file_path' => $filePath, 'file_size' => $fileSize, 'file_type' => $fileType]);
-                    //Переносим файл при успешном добавлении мета-данных в БД
-                    $connection = null;
-                    if ($statement) {
+                    try {
+                        $connection->beginTransaction();
+
+                        $statement = $connection->prepare('INSERT INTO files (id, user_id, file_name, file_path, file_size, file_type, file_created_at) values(NULL, :user_id, :file_name, :file_path, :file_size, :file_type, DEFAULT)');
+                        $statement->execute(['user_id' => $user['id'], 'file_name' => $fileName, 'file_path' => $filePath, 'file_size' => $fileSize, 'file_type' => $fileType]);
+
+                        $fileId = $connection->lastInsertId();
+
                         $userFolder = $filePath;
                         if (!file_exists($userFolder)) { // если папка не существует
                             mkdir($userFolder, 0777, true); // создаем ее со всеми правами доступа
                         }
                         $sourcePath = $_FILES['file']['tmp_name']; //временный путь до файла на сервере
                         $targetPath = $userFolder . $fileName; //путь до файла, где его нужно сохранить
-                        //перемещаем файл из временной директории в папку uploads
 
+                        //перемещаем файл из временной директории в папку uploads
                         if (move_uploaded_file($sourcePath, $targetPath)) {
+                            $connection->commit();
                             echo 'Файл успешно загружен';
                         } else {
+                            $connection->rollBack();
                             echo 'File upload error';
                             echo 'Error details: ' . error_get_last();
                         }
-                    } else {
-                        echo 'File upload error';
+                    } catch (PDOException $e) {
+                        $connection->rollBack();
+                        echo "File upload error: " . $e->getMessage();
                     }
                 }
             }
