@@ -104,4 +104,26 @@ class FileClass
             }
         }
     }
+
+    //Вывести список файлов
+    static public function showListFiles()
+    {            
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
+            $user_id = $user['id'];
+            global $connection;
+            try {
+                $statement = $connection->prepare('SELECT file_name FROM files WHERE user_id = :user_id');
+                $statement->execute(['user_id' => $user_id]);
+                $listFiles = $statement->fetchAll(PDO::FETCH_ASSOC);
+                $fileNames = array_column($listFiles, 'file_name');
+                $fileNames = array_combine(range(0, count($fileNames) - 1), $fileNames); // добавлены числовые ключи
+                echo json_encode(['files' => $fileNames]);
+            } catch (PDOException $e) {
+                echo 'Error request to Data Base: ' . $e->getMessage();
+                http_response_code(500);
+            }
+        }
+    }
 }
