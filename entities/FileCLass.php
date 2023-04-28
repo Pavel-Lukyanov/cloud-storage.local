@@ -102,28 +102,69 @@ class FileClass
                     }
                 }
             }
+        } else {
+            http_response_code(400);
+            echo 'Error: Access denied';
+            return false;
         }
     }
 
-    //Вывести список файлов
-    static public function showListFiles()
-    {            
+    static public function showFile()
+    {
         header('Content-Type: application/json');
         $user = self::userAuthorization();
         if ($user) {
             $user_id = $user['id'];
-            global $connection;
-            try {
-                $statement = $connection->prepare('SELECT file_name FROM files WHERE user_id = :user_id');
-                $statement->execute(['user_id' => $user_id]);
-                $listFiles = $statement->fetchAll(PDO::FETCH_ASSOC);
-                $fileNames = array_column($listFiles, 'file_name');
-                $fileNames = array_combine(range(0, count($fileNames) - 1), $fileNames); // добавлены числовые ключи
-                echo json_encode(['files' => $fileNames]);
-            } catch (PDOException $e) {
-                echo 'Error request to Data Base: ' . $e->getMessage();
-                http_response_code(500);
+
+            $url = $_SERVER['REQUEST_URI'];
+            $parts = explode('/', $url);
+            $file_id = $parts[sizeof($parts) - 1]; // Извлекаем id файла из URL
+
+            //Проверка на присутствие параметра в URL
+            if (empty($file_id)) {
+                self::showListFiles($user_id);
+            } else {
+                self::getFileId($user_id, $file_id);
             }
+        } else {
+            http_response_code(400);
+            echo 'Error: Access denied';
+            return false;
+        }
+    }
+
+    //Вывести список файлов
+    static private function showListFiles($user_id)
+    {
+        global $connection;
+        try {
+            $statement = $connection->prepare('SELECT file_name FROM files WHERE user_id = :user_id');
+            $statement->execute(['user_id' => $user_id]);
+            $listFiles = $statement->fetchAll(PDO::FETCH_ASSOC);
+            $fileNames = array_column($listFiles, 'file_name');
+            $fileNames = array_combine(range(0, count($fileNames) - 1), $fileNames); // добавлены числовые ключи
+            echo json_encode(['files' => $fileNames]);
+        } catch (PDOException $e) {
+            echo 'Error request to Data Base: ' . $e->getMessage();
+            http_response_code(500);
+        }
+    }
+
+    static private function getFileId($user_id, $file_id)
+    {
+        global $connection;
+        try {
+            $statement = $connection->prepare('SELECT file_name, file_path, file_size, file_created_at, file_type FROM files WHERE user_id = :user_id AND id = :id');
+            $statement->execute(['user_id' => $user_id, 'id' => $file_id]);
+            $file = $statement->fetch(PDO::FETCH_ASSOC);
+            if (empty($file)) {
+                echo json_encode(['error' => 'File is not found']);
+                return;
+            };
+            echo json_encode(['file' => $file]);
+        } catch (PDOException $e) {
+            echo 'Error request to Data Base: ' . $e->getMessage();
+            http_response_code(500);
         }
     }
 }

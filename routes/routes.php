@@ -28,6 +28,6 @@ return array(
     ],
     '/file/' => [
         'POST' => 'FileClass::addFile',
-        'GET' => 'FileClass::showListFiles'
+        'GET' => 'FileClass::showFile'
     ],
 );
