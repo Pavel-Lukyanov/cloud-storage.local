@@ -82,6 +82,7 @@ class FileClass
                     $statement = $connection->prepare('INSERT INTO files (id, user_id, file_name, file_path, file_size, file_type, file_created_at) values(NULL, :user_id, :file_name, :file_path, :file_size, :file_type, DEFAULT)');
                     $statement->execute(['user_id' => $user['id'], 'file_name' => $fileName, 'file_path' => $filePath, 'file_size' => $fileSize, 'file_type' => $fileType]);
                     //Переносим файл при успешном добавлении мета-данных в БД
+                    $connection = null;
                     if ($statement) {
                         $userFolder = $filePath;
                         if (!file_exists($userFolder)) { // если папка не существует
@@ -95,7 +96,7 @@ class FileClass
                             echo 'Файл успешно загружен';
                         } else {
                             echo 'File upload error';
-                            echo 'Error details: ' . error_get_last(); // выводим подробную
+                            echo 'Error details: ' . error_get_last();
                         }
                     } else {
                         echo 'File upload error';
@@ -109,31 +110,26 @@ class FileClass
         }
     }
 
+    //Выбор метода в зависимости от присутствия параметров
     static public function showFile()
     {
         header('Content-Type: application/json');
         $user = self::userAuthorization();
         if ($user) {
             $user_id = $user['id'];
-
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
             $file_id = $parts[sizeof($parts) - 1]; // Извлекаем id файла из URL
-
             //Проверка на присутствие параметра в URL
             if (empty($file_id)) {
                 self::showListFiles($user_id);
             } else {
                 self::getFileId($user_id, $file_id);
             }
-        } else {
-            http_response_code(400);
-            echo 'Error: Access denied';
-            return false;
         }
     }
 
-    //Вывести список файлов
+    //Вывести список файлов всех файлов определенного пользователя
     static private function showListFiles($user_id)
     {
         global $connection;
@@ -142,14 +138,21 @@ class FileClass
             $statement->execute(['user_id' => $user_id]);
             $listFiles = $statement->fetchAll(PDO::FETCH_ASSOC);
             $fileNames = array_column($listFiles, 'file_name');
-            $fileNames = array_combine(range(0, count($fileNames) - 1), $fileNames); // добавлены числовые ключи
+            if (count($fileNames) > 0) {
+                $fileNames = array_combine(range(0, count($fileNames) - 1), $fileNames);
+            } else {
+                $fileNames = array();
+            }
+            $connection = null;
             echo json_encode(['files' => $fileNames]);
         } catch (PDOException $e) {
             echo 'Error request to Data Base: ' . $e->getMessage();
+            $connection = null;
             http_response_code(500);
         }
     }
 
+    //Получение информации о файле по id
     static private function getFileId($user_id, $file_id)
     {
         global $connection;
@@ -160,11 +163,58 @@ class FileClass
             if (empty($file)) {
                 echo json_encode(['error' => 'File is not found']);
                 return;
+                $connection = null;
             };
+            $connection = null;
             echo json_encode(['file' => $file]);
         } catch (PDOException $e) {
             echo 'Error request to Data Base: ' . $e->getMessage();
             http_response_code(500);
+        }
+    }
+
+    //Удалить файл по id
+    static public function deleteFile()
+    {
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
+            $user_id = $user['id'];
+            $url = $_SERVER['REQUEST_URI'];
+            $parts = explode('/', $url);
+            $file_id = $parts[sizeof($parts) - 1]; // Извлекаем id файла из URL
+            if (!empty($file_id)) {
+                global $connection;
+                try {
+                    // Начинаем транзакцию
+                    $connection->beginTransaction();
+                    $statement = $connection->prepare('SELECT file_path, file_name FROM files WHERE id = :file_id AND user_id = :user_id');
+                    $statement->execute(['file_id' => $file_id, 'user_id' => $user_id]);
+                    $file = $statement->fetch(PDO::FETCH_ASSOC);
+                    $file_path = $file['file_path'] . $file['file_name'];
+                    if (unlink($file_path)) {
+                        if ($file) {
+                            $statement = $connection->prepare('DELETE FROM files WHERE id = :file_id AND user_id = :user_id');
+                            $statement->execute(['file_id' => $file_id, 'user_id' => $user_id]);
+                            // Фиксируем изменения в БД
+                            $connection->commit();
+                            http_response_code(204);
+                            $connection = null;
+                        } else {
+                            http_response_code(404);
+                            echo json_encode(['error' => 'File not found']);
+                        }
+                    } else {
+                        echo json_encode(['error' => 'An error occurred while deleting the file.']);
+                    }
+                } catch (PDOException $e) {
+                    // Откатываем транзакцию в случае ошибки
+                    $connection->rollBack();
+                    echo json_encode(['error' => 'An error occurred while deleting the file.']);
+                }
+            } else {
+                echo json_encode(['error' => 'Not all data was transferred']);
+            }
         }
     }
 }

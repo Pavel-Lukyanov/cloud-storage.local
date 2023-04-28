@@ -167,9 +167,7 @@ class AdminClass
                             global $connection;
                             $statement = $connection->prepare('SELECT COUNT(*) FROM users WHERE id = :id');
                             $statement->execute(['id' => $user_id]);
-
                             $user_exists = $statement->fetchColumn();
-
                             if ($user_exists) {
                                 $statement = $connection->prepare('DELETE FROM users WHERE id = :id');
                                 $statement->execute(['id' => $user_id]);

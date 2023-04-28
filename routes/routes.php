@@ -28,6 +28,7 @@ return array(
     ],
     '/file/' => [
         'POST' => 'FileClass::addFile',
-        'GET' => 'FileClass::showFile'
+        'GET' => 'FileClass::showFile',
+        'DELETE' => 'FileClass::deleteFile',
     ],
 );
