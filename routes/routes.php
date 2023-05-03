@@ -31,4 +31,10 @@ return array(
         'GET' => 'FileClass::showFile',
         'DELETE' => 'FileClass::deleteFile',
     ],
+    '/directory/' => [
+        'POST' => 'FileClass::addFolder',
+        'PUT' => 'FileClass::renameFolder',
+        'GET' => 'FileClass::getInfoFolder',
+        'DELETE' => 'FileClass::deleteFolder'
+    ]
 );
