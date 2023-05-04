@@ -34,11 +34,30 @@ class UserClass
                 $role = htmlspecialchars(trim($data['role']));
                 $password = htmlspecialchars(trim($data['password']));
                 $password = password_hash($password, PASSWORD_DEFAULT);
+
                 global $connection;
+                $connection->beginTransaction();
                 $statement = $connection->prepare("INSERT INTO users (id, email, password, role) values(null, :email, :password, :role)");
                 $statement->execute(['email' => $email, 'password' => $password, 'role' => $role]);
-                // Возвращаем успешный ответ с данными пользователя
+
                 $user_id = $connection->lastInsertId();
+
+                //Добавляем папку пользователя
+                $statement = $connection->prepare('INSERT INTO folders (id, folder_name, user_id, parent_folder_id, folder_path, created_at, updated_at) values(NULL, :folder_name, :user_id, NULL, :folder_path, DEFAULT, DEFAULT)');
+                $statement->execute(['folder_name' => $user_id, 'user_id' => $user_id, 'folder_path' => '/files/' . $user_id. '/']);
+                $pathFolder = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user_id . '/';
+                try {
+                    if (!file_exists($pathFolder)) { // если папка не существует
+                        mkdir($pathFolder, 0777, true); // создаем ее со всеми правами доступа
+                        $connection->commit();
+                    }
+                } catch (PDOException $e) {
+                    // Откатываем транзакцию в случае ошибки
+                    $connection->rollBack();
+                    echo json_encode(['Error' => 'Folder is not created']);
+                }
+
+                // Возвращаем успешный ответ с данными пользователя
                 $data = [
                     'id' => $user_id,
                     'email' => $email,
