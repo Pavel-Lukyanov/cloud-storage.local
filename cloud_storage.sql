@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Май 03 2023 г., 13:13
+-- Время создания: Май 04 2023 г., 10:37
 -- Версия сервера: 8.0.30
 -- Версия PHP: 8.1.9
 
@@ -44,14 +44,8 @@ CREATE TABLE `files` (
 --
 
 INSERT INTO `files` (`id`, `file_name`, `original_name`, `user_id`, `parent_folder_id`, `file_path`, `file_size`, `file_type`, `file_created_at`) VALUES
-(5, '1_1682668018_asd.jpg', '', 1, 0, 'E:/Pavel/OSPanel/domains/cloud-storage.local/files/1/', 6914, 'image/jpeg', '2023-04-28 07:46:58'),
-(6, '1_1682668224_Скриншот 28-04-2023 124246.jpg', '', 1, 0, 'E:/Pavel/OSPanel/domains/cloud-storage.local/files/1/', 15885, 'image/jpeg', '2023-04-28 07:50:24'),
-(7, '7_1682668362_Скриншот 28-04-2023 124010.jpg', '', 7, 0, 'E:/Pavel/OSPanel/domains/cloud-storage.local/files/7/', 119218, 'image/jpeg', '2023-04-28 07:52:42'),
-(8, '1_1683098084_Скриншот 03-05-2023 121434.jpg', '', 1, NULL, '/files/1/', 1147, 'image/jpeg', '2023-05-03 07:14:44'),
-(9, '1_1683098170_Скриншот 03-05-2023 121434.jpg', '', 1, NULL, '/files/1/', 1147, 'image/jpeg', '2023-05-03 07:16:10'),
-(10, '1_1683098322_Скриншот 03-05-2023 121434.jpg', 'Скриншот 03-05-2023 121434.jpg', 1, NULL, '/files/1/', 1147, 'image/jpeg', '2023-05-03 07:18:42'),
-(11, '1_1683100964_Скриншот 03-05-2023 121434.jpg', 'Скриншот 03-05-2023 121434.jpg', 1, 1, '/files/1/', 1147, 'image/jpeg', '2023-05-03 08:02:44'),
-(13, '1_1683105126_Скриншот 03-05-2023 121434.jpg', 'Скриншот 03-05-2023 121434.jpg', 1, 1, '/files/1/', 1147, 'image/jpeg', '2023-05-03 09:12:06');
+(8, '1_1683181793_Скриншот 04-05-2023 095146.jpg', 'Скриншот 04-05-2023 095146.jpg', 1, 1, '/files/1/', 60185, 'image/jpeg', '2023-05-04 06:29:53'),
+(9, '1_1683182315_Скриншот 04-05-2023 095146.jpg', 'Скриншот 04-05-2023 095146.jpg', 1, 8, '/files/1/новая папка/Еще одна новая папка вложенная/', 60185, 'image/jpeg', '2023-05-04 06:38:35');
 
 -- --------------------------------------------------------
 
@@ -74,10 +68,11 @@ CREATE TABLE `folders` (
 --
 
 INSERT INTO `folders` (`id`, `folder_name`, `user_id`, `parent_folder_id`, `folder_path`, `created_at`, `updated_at`) VALUES
-(1, '1', 1, NULL, '/files/1/', '2023-05-03 12:12:06', '2023-05-03 12:12:06'),
-(15, 'Новая папка', 1, 1, '/files/1/', '2023-05-03 13:10:31', '2023-05-03 13:10:31'),
-(16, 'Новая папка', 1, 1, '/files/1/', '2023-05-03 13:12:26', '2023-05-03 13:12:26'),
-(17, 'тестовая папка', 1, 1, '/files/1/', '2023-05-03 13:12:50', '2023-05-03 13:12:50');
+(1, '1', 1, NULL, '/files/1/', '2023-05-04 08:46:50', '2023-05-04 08:46:50'),
+(7, 'новая папка', 1, 1, '/files/1/новая папка/', '2023-05-04 08:51:39', '2023-05-04 08:51:39'),
+(8, 'Еще одна новая папка вложенная', 1, 7, '/files/1/новая папка/Еще одна новая папка вложенная/', '2023-05-04 08:51:59', '2023-05-04 08:51:59'),
+(9, 'Плюс Еще одна новая папка вложенная', 1, 7, '/files/1/новая папка/Плюс Еще одна новая папка вложенная/', '2023-05-04 08:52:28', '2023-05-04 08:52:28'),
+(10, 'test', 1, 8, '/files/1/новая папка/Еще одна новая папка вложенная/test/', '2023-05-04 10:35:37', '2023-05-04 10:35:37');
 
 -- --------------------------------------------------------
 
@@ -97,9 +92,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role`, `email`, `password`) VALUES
-(1, 'admin', 'PavelAlexandrov86@yandex.ru', '$2y$10$yg9uYjRZ.FrWQTHn2VH8ueXAfCepBNZ0Ctip8ubN5I2WyBzoqiPuG'),
-(7, 'user', 'test@yandex.ru', '$2y$10$yg9uYjRZ.FrWQTHn2VH8ueXAfCepBNZ0Ctip8ubN5I2WyBzoqiPuG'),
-(8, 'admin', 'PavelAlexandrov86@yandex.ru', '$2y$10$KIu1Fezu/OqnRf0CSREEK.X.lPUkymR0P8I61USBOUNoOhRFFws4G');
+(1, 'admin', 'Pavel', '$2y$10$SZguZHcSNCygB1IbNb3OTOqvQbUcfMzo8nv.vB6UrSlR3vGoDxll.');
 
 -- --------------------------------------------------------
 
@@ -119,11 +112,7 @@ CREATE TABLE `user_tokens` (
 --
 
 INSERT INTO `user_tokens` (`id`, `user_id`, `token`, `expiration_time`) VALUES
-(11, 1, '47910f9a679160c656d2037735474dce1e94ae7f8fcc2fc430ebd31cd42f83cb', '2023-04-29 09:37:01'),
-(12, 1, '26d84f1e78dfe6e79c19b1a989b844feefa0e2fa89f4f71f8e40210364ae4f06', '2023-04-28 10:37:42'),
-(13, 1, '4e3ba3c0080a44fdadf8a3c4f49989ad377bf2c64af9b4b62ee3adaf6064dfda', '2023-04-28 10:37:54'),
-(14, 1, '01ccb7c78823c74394d604de3e88e7f3ed549450b2349413a2887a127d325c9b', '2023-04-28 10:38:58'),
-(17, 1, '5ce4ce4a98f5ac08b90d159eb4f3e05e5cc8734372c9b5902da9d9a0e5c0c89f', '2023-05-04 10:12:03');
+(1, 1, '44349737c76c27bded2033d4965ad3fe5f596d628d68a43216784f14bf702878', '2023-05-05 08:47:28');
 
 --
 -- Индексы сохранённых таблиц
@@ -166,25 +155,25 @@ ALTER TABLE `user_tokens`
 -- AUTO_INCREMENT для таблицы `files`
 --
 ALTER TABLE `files`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT для таблицы `folders`
 --
 ALTER TABLE `folders`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT для таблицы `user_tokens`
 --
 ALTER TABLE `user_tokens`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Ограничения внешнего ключа сохраненных таблиц
