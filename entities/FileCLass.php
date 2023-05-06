@@ -257,7 +257,6 @@ class FileClass
             if (isset($data['folder_name']) && !empty($data['folder_name'])) {
                 $folderName = trim(htmlspecialchars($data['folder_name']));
                 $folderPath = '/files/' . $user['id'] . '/';
-                var_dump($folderPath);
                 try {
                     global $connection;
                     //Добавляем папку
@@ -310,7 +309,7 @@ class FileClass
                 if (!empty($data)) {
                     foreach ($data as $row) {
                         $arrFiles[] = $row['original_name'];
-                        echo json_encode(['Files' => $arrFiles]);
+                        echo json_encode(['files' => $arrFiles]);
                     }
                 } else {
                     echo json_encode(['message' => 'Folder contains no files']);
@@ -318,6 +317,60 @@ class FileClass
             } catch (PDOException $e) {
                 echo json_encode(['Error' => $e->getMessage()]);
             }
+        }
+    }
+
+    //Переименовать папку 
+    static public function renameFolder()
+    {
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
+            $data = json_decode(file_get_contents("php://input"), true);
+            if (isset($data['id']) && !empty(trim($data['id'])) && isset($data['folder_name']) && !empty($data['folder_name'])) {
+                $fileId = htmlspecialchars(trim($data['id']));
+                $newFileName = htmlspecialchars(trim($data['folder_name']));
+                global $connection;
+                $statement = $connection->prepare('SELECT folder_name FROM folders WHERE id =:id AND user_id = :user_id');
+                $statement->execute(['id' => $fileId, 'user_id' => $user['id']]);
+                $fileName = $statement->fetch(PDO::FETCH_ASSOC);
+                if (!empty($fileName)) {
+                    try {
+                        global $connection;
+                        //Переименовываем папку
+                        $connection->beginTransaction();
+
+                        $statement = $connection->prepare('UPDATE folders SET folder_name = :new_folder_name WHERE id =:id AND user_id = :user_id');
+                        $statement->execute(['id' => $fileId, 'new_folder_name' => $newFileName, 'user_id' => $user['id']]);
+
+                        try {
+                            if (rename($_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $fileName['folder_name'], $newFileName)) {
+                                $connection->commit();
+                                echo json_encode(['Error' => 'Folder renamed success']);
+                            } else {
+                                echo json_encode(['Error' => 'Folder is not renamed']);
+                            }
+                        } catch (PDOException $e) {
+                            // Откатываем транзакцию в случае ошибки
+                            $connection->rollBack();
+                            echo json_encode(['Error' => 'Folder is not renamed']);
+                        }
+                    } catch (PDOException $e) {
+                        echo json_encode(['Error' => 'Folder root is not exists']);
+                    }
+                } else {
+                    echo json_encode(['error' => 'File is not found']);
+                }
+            }
+        }
+    }
+
+    //Переименовать или переместить файл
+    static public function renameMoveFile()
+    {
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
         }
     }
 }
