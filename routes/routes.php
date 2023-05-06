@@ -29,6 +29,7 @@ return array(
     '/file/' => [
         'POST' => 'FileClass::addFile',
         'GET' => 'FileClass::showFile',
+        'PUT' => 'FileClass::renameMoveFile',
         'DELETE' => 'FileClass::deleteFile',
     ],
     '/directory/' => [

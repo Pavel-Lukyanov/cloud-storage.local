@@ -371,6 +371,65 @@ class FileClass
         header('Content-Type: application/json');
         $user = self::userAuthorization();
         if ($user) {
+            $data = json_decode(file_get_contents("php://input"), true);
+            if (isset($data['file_id']) && !empty(trim($data['file_id']))) {
+                $fileId = htmlspecialchars(trim($data['file_id']));
+                //Переименовываем файл
+                if (isset($data['file_name']) && !empty(trim($data['file_name'])) && !isset($data['new_folder_file'])) {
+                    $newFileName = htmlspecialchars(trim($data['file_name']));
+                    self::renameFile($fileId, $newFileName, $user);
+
+                    //Перемещаем файл
+                } elseif (!empty($data['parent_folder_id']) && !empty($data['new_folder_file']) && !isset($data['file_name'])) {
+                    $file = 1;
+                } else {
+                    echo json_encode(['error' => 'Bad request']);
+                }
+            }
+        }
+    }
+
+    static private function renameFile($fileId, $newFileName, $user)
+    {
+        $fileName = $user['id'] . '_' . time() . '_' . $newFileName;
+        try {
+            global $connection;
+            //Узнаем id папки в которой лежит файл
+            $statement = $connection->prepare('SELECT file_name, parent_folder_id, file_type FROM files WHERE id = :id');
+            $statement->execute(['id' => $fileId]);
+            $data = $statement->fetch(PDO::FETCH_ASSOC);
+            $parentFolderId = $data['parent_folder_id'];
+            $oldFileName = $data['file_name'];
+            $fileType = $data['file_type'];
+            $mime_parts = explode('/', $fileType);
+            $fileType = end($mime_parts);
+
+            //Узнаем название папки
+            $statement = $connection->prepare('SELECT folder_name FROM folders WHERE id = :id');
+            $statement->execute(['id' => $parentFolderId]);
+            $parentFolderName = $statement->fetch(PDO::FETCH_ASSOC);
+
+            $filePath = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $parentFolderName['folder_name'] . '/';
+            try {
+                $connection->beginTransaction();
+                $statement = $connection->prepare('UPDATE files SET file_name = :new_file_name, original_name = :new_original_name WHERE id =:id AND user_id = :user_id');
+                $statement->execute(['new_file_name' => $fileName . '.' . $fileType, 'new_original_name' => $newFileName . '.' . $fileType, 'id' => $fileId, 'user_id' => $user['id']]);
+
+                $oldFile = $filePath . $oldFileName;
+                $newFile = $filePath . $fileName . '.' . $fileType;
+
+                if (rename($oldFile, $newFile)) {
+                    $connection->commit();
+                    echo 'Файл переименован.';
+                } else {
+                    $connection->rollBack();
+                    echo 'Не удалось переименовать файл.';
+                }
+            } catch (PDOException $e) {
+                echo json_encode(['Error' => $e->getMessage()]);
+            }
+        } catch (PDOException $e) {
+            echo json_encode(['Error' => $e->getMessage()]);
         }
     }
 }
