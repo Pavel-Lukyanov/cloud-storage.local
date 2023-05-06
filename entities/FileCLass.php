@@ -346,19 +346,24 @@ class FileClass
                         try {
                             if (rename($_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $fileName['folder_name'], $newFileName)) {
                                 $connection->commit();
+                                http_response_code(200);
                                 echo json_encode(['Error' => 'Folder renamed success']);
                             } else {
+                                http_response_code(400);
                                 echo json_encode(['Error' => 'Folder is not renamed']);
                             }
                         } catch (PDOException $e) {
                             // Откатываем транзакцию в случае ошибки
                             $connection->rollBack();
+                            http_response_code(400);
                             echo json_encode(['Error' => 'Folder is not renamed']);
                         }
                     } catch (PDOException $e) {
+                        http_response_code(400);
                         echo json_encode(['Error' => 'Folder root is not exists']);
                     }
                 } else {
+                    http_response_code(400);
                     echo json_encode(['error' => 'File is not found']);
                 }
             }
@@ -375,13 +380,15 @@ class FileClass
             if (isset($data['file_id']) && !empty(trim($data['file_id']))) {
                 $fileId = htmlspecialchars(trim($data['file_id']));
                 //Переименовываем файл
-                if (isset($data['file_name']) && !empty(trim($data['file_name'])) && !isset($data['new_folder_file'])) {
+                if (isset($data['file_name']) && !empty(trim($data['file_name'])) && !isset($data['new_folder_id'])) {
                     $newFileName = htmlspecialchars(trim($data['file_name']));
                     self::renameFile($fileId, $newFileName, $user);
 
                     //Перемещаем файл
-                } elseif (!empty($data['parent_folder_id']) && !empty($data['new_folder_file']) && !isset($data['file_name'])) {
-                    $file = 1;
+                } elseif (!empty($data['new_folder_id']) && !empty($data['file_id']) && !isset($data['file_name'])) {
+                    $fileId = htmlspecialchars(trim($data['file_id']));
+                    $newParentFolderId = htmlspecialchars(trim($data['new_folder_id']));
+                    self::moveFile($fileId, $newParentFolderId, $user);
                 } else {
                     echo json_encode(['error' => 'Bad request']);
                 }
@@ -395,8 +402,8 @@ class FileClass
         try {
             global $connection;
             //Узнаем id папки в которой лежит файл
-            $statement = $connection->prepare('SELECT file_name, parent_folder_id, file_type FROM files WHERE id = :id');
-            $statement->execute(['id' => $fileId]);
+            $statement = $connection->prepare('SELECT file_name, parent_folder_id, file_type FROM files WHERE id = :id AND user_id = :user_id');
+            $statement->execute(['id' => $fileId, 'user_id' => $user['id']]);
             $data = $statement->fetch(PDO::FETCH_ASSOC);
             $parentFolderId = $data['parent_folder_id'];
             $oldFileName = $data['file_name'];
@@ -420,16 +427,63 @@ class FileClass
 
                 if (rename($oldFile, $newFile)) {
                     $connection->commit();
-                    echo 'Файл переименован.';
+                    http_response_code(200);
+                    echo json_encode(['message' => 'Success rename file']);
                 } else {
                     $connection->rollBack();
-                    echo 'Не удалось переименовать файл.';
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Unsuccess rename file']);
                 }
             } catch (PDOException $e) {
                 echo json_encode(['Error' => $e->getMessage()]);
             }
         } catch (PDOException $e) {
             echo json_encode(['Error' => $e->getMessage()]);
+        }
+    }
+
+    static private function moveFile($fileId, $newParentFolderId, $user)
+    {
+        global $connection;
+        $statement = $connection->prepare('SELECT file_name, parent_folder_id FROM files WHERE id = :id AND user_id = :user_id');
+        $statement->execute(['id' => $fileId, 'user_id' => $user['id']]);
+        $dataFile = $statement->fetch(PDO::FETCH_ASSOC);
+
+        $oldParentId = $dataFile['parent_folder_id'];
+
+        $statement = $connection->prepare('SELECT folder_name FROM folders WHERE id = :id AND user_id = :user_id');
+        $statement->execute(['id' => $oldParentId, 'user_id' => $user['id']]);
+        $dataOldFolder =  $statement->fetch(PDO::FETCH_ASSOC);
+
+        $statement = $connection->prepare('SELECT folder_name FROM folders WHERE id = :id AND user_id = :user_id');
+        $statement->execute(['id' => $newParentFolderId, 'user_id' => $user['id']]);
+        $dataNewFolder = $statement->fetch(PDO::FETCH_ASSOC);
+
+        $fileName = $dataFile['file_name'];
+        $oldParentFolderName = $dataOldFolder['folder_name'];
+        $newParentFolderName = $dataNewFolder['folder_name'];
+
+        try {
+            $connection->beginTransaction();
+            $statement = $connection->prepare('UPDATE files SET parent_folder_id = :parent_folder_id WHERE id = :id AND user_id = :user_id');
+            $statement->execute(['parent_folder_id' => $newParentFolderId, 'id' => $fileId, 'user_id' => $user['id']]);
+
+            $oldFilePath = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $oldParentFolderName . '/' . $fileName;
+            $newFilePath = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $newParentFolderName . '/' . $fileName;
+
+            if (rename($oldFilePath, $newFilePath)) {
+                $connection->commit();
+                http_response_code(200);
+                echo json_encode(['message' => 'Success move file']);
+            } else {
+                $connection->rollBack();
+                http_response_code(400);
+                echo json_encode(['error' => 'Unsuccess move file']);
+            }
+        } catch (PDOException $e) {
+            $connection->rollBack();
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 }
