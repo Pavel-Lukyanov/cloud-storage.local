@@ -41,5 +41,6 @@ return array(
     '/files/share/' => [
         'GET' => 'FileClass::shareUsers',
         'PUT' => 'FileClass::shareFale',
+        'DELETE' => 'FileClass::terminateAccessFile'
     ],
 );

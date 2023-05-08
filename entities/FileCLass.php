@@ -551,4 +551,35 @@ class FileClass
             }
         }
     }
+
+    //Прекратить доступ к файлу 
+    static public function terminateAccessFile()
+    {
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
+            $url = $_SERVER['REQUEST_URI'];
+            $parsed_url = parse_url($url);
+
+            $userId = intval(explode('/', $parsed_url['path'])[3]);
+            $fileId = intval(explode('/', $parsed_url['path'])[4]);
+            try {
+                global $connection;
+                $statement = $connection->prepare('DELETE FROM file_share_permissions WHERE file_id = :file_id AND user_id = :user_id');
+                $statement->execute(['file_id' => $fileId, 'user_id' => $userId]);
+
+                $rowCount = $statement->rowCount();
+                if ($rowCount > 0) {
+                    http_response_code(200);
+                    echo json_encode(['message' => 'File access terminated successfully.']);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Failed to terminate file access.']);
+                }
+            } catch (PDOException $e) {
+                http_response_code(500);
+                echo json_encode(['error' => $e->getMessage()]);
+            }
+        }
+    }
 }
