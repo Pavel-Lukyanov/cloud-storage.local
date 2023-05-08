@@ -16,6 +16,7 @@ $url = $_SERVER['REQUEST_URI'];
 $method = $_SERVER['REQUEST_METHOD'];
 
 //Удаляем цифровые параметры из url
+$url = preg_replace('/(\d+\/){2,}/', '', $url);
 $url = preg_replace('/\d+/', '', $url);
 
 //Проверяем в массиве роутов совпадение на url и метод

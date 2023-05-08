@@ -486,4 +486,69 @@ class FileClass
             echo json_encode(['error' => $e->getMessage()]);
         }
     }
+
+    //Добавить доступ к файлу пользователю
+    static public function shareFale()
+    {
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
+            $url = $_SERVER['REQUEST_URI'];
+            $parsed_url = parse_url($url);
+
+            $userId = intval(explode('/', $parsed_url['path'])[3]);
+            $fileId = intval(explode('/', $parsed_url['path'])[4]);
+
+            try {
+                global $connection;
+                $statement = $connection->prepare('SELECT email FROM users WHERE id =:id');
+                $statement->execute(['id' => $userId]);
+                $dataUserId = $statement->fetch(PDO::FETCH_ASSOC);
+
+                var_dump($userId);
+                if ($dataUserId) {
+                    $statement = $connection->prepare('SELECT file_name FROM files WHERE id =:id');
+                    $statement->execute(['id' => $fileId]);
+                    $dataFileId = $statement->fetch(PDO::FETCH_ASSOC);
+                    if ($dataFileId) {
+                        $statement = $connection->prepare('INSERT INTO file_share_permissions (id, file_id, user_id) values(NULL, :file_id, :user_id)');
+                        $statement->execute(['file_id' => $fileId, 'user_id' => $userId]);
+                        http_response_code(200);
+                    } else {
+                        http_response_code(404);
+                        echo json_encode(['error' => 'File is not found']);
+                    }
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'User is not found']);
+                }
+            } catch (PDOException $e) {
+                echo json_encode(['error' => $e->getMessage()]);
+            }
+        }
+    }
+
+    //Получить список пользователей имеющих доступ к файлу
+    static public function shareUsers()
+    {
+        header('Content-Type: application/json');
+        $user = self::userAuthorization();
+        if ($user) {
+            $url = $_SERVER['REQUEST_URI'];
+            $parts = explode('/', $url);
+            $fileId = $parts[sizeof($parts) - 1]; // Извлекаем id файла из URL
+
+            try {
+                global $connection;
+                $statement = $connection->prepare('SELECT user_id FROM file_share_permissions WHERE file_id = :file_id');
+                $statement->execute(['file_id' => $fileId]);
+                $data = $statement->fetchAll();
+                $userIds = array_column($data, 'user_id');
+                http_response_code(200);
+                echo json_encode(['user_id' => $userIds]);
+            } catch (PDOException $e) {
+                echo json_encode(['error' => $e->getMessage()]);
+            }
+        }
+    }
 }

@@ -37,5 +37,9 @@ return array(
         'PUT' => 'FileClass::renameFolder',
         'GET' => 'FileClass::getInfoFolder',
         'DELETE' => 'FileClass::deleteFolder'
-    ]
+    ],
+    '/files/share/' => [
+        'GET' => 'FileClass::shareUsers',
+        'PUT' => 'FileClass::shareFale',
+    ],
 );
