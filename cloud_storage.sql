@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Май 06 2023 г., 17:07
+-- Время создания: Май 08 2023 г., 22:40
 -- Версия сервера: 8.0.30
 -- Версия PHP: 8.1.9
 
@@ -44,6 +44,25 @@ CREATE TABLE `files` (
 
 INSERT INTO `files` (`id`, `file_name`, `original_name`, `user_id`, `parent_folder_id`, `file_size`, `file_type`, `file_created_at`) VALUES
 (22, '1_1683379351_screenshot.png', 'screenshot.png', 1, 3, 30049, 'image/png', '2023-05-06 09:41:54');
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `file_share_permissions`
+--
+
+CREATE TABLE `file_share_permissions` (
+  `id` int NOT NULL,
+  `file_id` int NOT NULL,
+  `user_id` int NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Дамп данных таблицы `file_share_permissions`
+--
+
+INSERT INTO `file_share_permissions` (`id`, `file_id`, `user_id`) VALUES
+(1, 22, 1);
 
 -- --------------------------------------------------------
 
@@ -122,6 +141,12 @@ ALTER TABLE `files`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Индексы таблицы `file_share_permissions`
+--
+ALTER TABLE `file_share_permissions`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Индексы таблицы `folders`
 --
 ALTER TABLE `folders`
@@ -152,6 +177,12 @@ ALTER TABLE `user_tokens`
 --
 ALTER TABLE `files`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT для таблицы `file_share_permissions`
+--
+ALTER TABLE `file_share_permissions`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT для таблицы `folders`
