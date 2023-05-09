@@ -43,8 +43,8 @@ class UserClass
                 $user_id = $connection->lastInsertId();
 
                 //Добавляем папку пользователя
-                $statement = $connection->prepare('INSERT INTO folders (id, folder_name, user_id, parent_folder_id, folder_path, created_at, updated_at) values(NULL, :folder_name, :user_id, NULL, :folder_path, DEFAULT, DEFAULT)');
-                $statement->execute(['folder_name' => $user_id, 'user_id' => $user_id, 'folder_path' => '/files/' . $user_id. '/']);
+                $statement = $connection->prepare('INSERT INTO folders (id, folder_name, user_id, parent_folder_id, created_at, updated_at) values(NULL, :folder_name, :user_id, NULL, DEFAULT, DEFAULT)');
+                $statement->execute(['folder_name' => $user_id, 'user_id' => $user_id]);
                 $pathFolder = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user_id . '/';
                 try {
                     if (!file_exists($pathFolder)) { // если папка не существует

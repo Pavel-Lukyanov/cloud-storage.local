@@ -18,14 +18,14 @@ if (isset($_POST['token']) && isset($_POST['email'])) {
         try {
             //$mail->SMTPDebug = 4;
             $mail->CharSet = 'UTF-8';
-            $mail->setFrom('');
+            $mail->setFrom('PavelAlexandrov86@yandex.ru');
             $mail->addAddress($_POST['email']);
             $mail->isHTML(true);
             $mail->isSMTP();                                            //Send using SMTP
             $mail->Host       = 'smtp.yandex.ru';                     //Set the SMTP server to send through
             $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
-            $mail->Username   = '';                     //SMTP username
-            $mail->Password   = '';
+            $mail->Username   = 'PavelAlexandrov86@yandex.ru';                     //SMTP username
+            $mail->Password   = 'PavelAlexandrov1234';
             $mail->Subject = 'Восстановление пароля: cloud.storage';
             $mail->Port       = 465;
             $mail->SMTPSecure = 'ssl';            //Enable implicit TLS encryption

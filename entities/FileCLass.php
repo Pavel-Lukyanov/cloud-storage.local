@@ -74,14 +74,14 @@ class FileClass
                     return;
                 } else {
                     $folderId = htmlspecialchars(trim($_POST['folder_id']));
-
                     if (!empty($folderId)) {
                         global $connection;
                         $statement = $connection->prepare('SELECT id, folder_name FROM folders WHERE id = :folder_id AND user_id = :user_id');
                         $statement->execute(['folder_id' => $folderId, 'user_id' => $user['id']]);
                         $infoFolder = $statement->fetch(PDO::FETCH_ASSOC);
+
                         if ($folderId == $user['id']) {
-                            $drPath = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $infoFolder['folder_name'] . '/';
+                            $drPath = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/';
                         } else {
                             $drPath = $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $infoFolder['folder_name'] . '/';
                         }
@@ -116,7 +116,6 @@ class FileClass
             $connection->beginTransaction();
             $statement = $connection->prepare('INSERT INTO files (id, parent_folder_id, original_name, user_id, file_name, file_size, file_type, file_created_at) values(NULL, :parent_folder_id, :original_name, :user_id, :file_name, :file_size, :file_type, DEFAULT)');
             $statement->execute(['parent_folder_id' => $infoFolder['id'], 'user_id' => $user['id'], 'file_name' => $fileName, 'original_name' => $originalFileName, 'file_size' => $fileSize, 'file_type' => $fileType]);
-
             $sourcePath = $_FILES['file']['tmp_name']; //временный путь до файла на сервере
             //перемещаем файл из временной директории в папку uploads
             $filePathName = $drPath . $fileName;
@@ -207,6 +206,7 @@ class FileClass
             $url = $_SERVER['REQUEST_URI'];
             $parts = explode('/', $url);
             $file_id = $parts[sizeof($parts) - 1]; // Извлекаем id файла из URL
+
             if (!empty($file_id)) {
                 try {
                     // Начинаем транзакцию
@@ -220,7 +220,13 @@ class FileClass
                     $statement->execute(['file_id' => $file['parent_folder_id'], 'user_id' => $user_id]);
                     $folderName = $statement->fetch(PDO::FETCH_ASSOC);
 
-                    $file_path = $folderName['folder_name'] . '/' . $file['file_name'];
+
+                    if ($folderName == NULL) {
+                        $file_path = $user['id'] . '/' . $file['file_name'];
+                    } else {
+                        $file_path = $folderName['folder_name'] . '/' . $file['file_name'];
+                    }
+
                     if ($file_path) {
                         if (unlink($_SERVER['DOCUMENT_ROOT'] . '/files/' . $file_path)) {
                             $statement = $connection->prepare('DELETE FROM files WHERE id = :file_id AND user_id = :user_id');
@@ -257,27 +263,27 @@ class FileClass
             if (isset($data['folder_name']) && !empty($data['folder_name'])) {
                 $folderName = trim(htmlspecialchars($data['folder_name']));
                 $folderPath = '/files/' . $user['id'] . '/';
+
+                $pathFolder = $_SERVER['DOCUMENT_ROOT'] . $folderPath . $folderName . '/';
+                global $connection;
+                $connection->beginTransaction();
+                $statement = $connection->prepare('SELECT id FROM folders WHERE folder_name = :folder_name');
+                $statement->execute(['folder_name' => $user['id']]);
+                $folderId = $statement->fetch(PDO::FETCH_ASSOC);
+                $folderId = $folderId['id'];
+                $statement = $connection->prepare('INSERT INTO folders (id, folder_name, user_id, parent_folder_id, created_at, updated_at) values(NULL, :folder_name, :user_id, :parent_folder_id, DEFAULT, DEFAULT)');
+                $statement->execute(['folder_name' => $folderName, 'user_id' => $user['id'], 'parent_folder_id' => $folderId]);
                 try {
-                    global $connection;
-                    //Добавляем папку
-                    $connection->beginTransaction();
-                    $statement = $connection->prepare('INSERT INTO folders (id, folder_name, user_id, parent_folder_id, created_at, updated_at) values(NULL, :folder_name, :user_id, :parent_folder_id, DEFAULT, DEFAULT)');
-                    $statement->execute(['folder_name' => $folderName, 'user_id' => $user['id'], 'parent_folder_id' => $user['id']]);
-                    $pathFolder = $_SERVER['DOCUMENT_ROOT'] . $folderPath . '/' . $folderName . '/';
-                    try {
-                        if (!file_exists($pathFolder)) { // если папка не существует
-                            mkdir($pathFolder, 0777, true); // создаем ее со всеми правами доступа
-                            $connection->commit();
-                            http_response_code(201);
-                            echo json_encode(['name' => $folderName, 'path' => $folderPath]);
-                        }
-                    } catch (PDOException $e) {
-                        // Откатываем транзакцию в случае ошибки
-                        $connection->rollBack();
-                        echo json_encode(['Error' => 'Folder is not created']);
+                    if (!file_exists($pathFolder)) { // если папка не существует
+                        mkdir($pathFolder, 0777, true); // создаем ее со всеми правами доступа
+                        $connection->commit();
+                        http_response_code(201);
+                        echo json_encode(['name' => $folderName, 'path' => $folderPath]);
                     }
                 } catch (PDOException $e) {
-                    echo json_encode(['Error' => 'Folder root is not exists']);
+                    // Откатываем транзакцию в случае ошибки
+                    $connection->rollBack();
+                    echo json_encode(['Error' => 'Folder is not created']);
                 }
             } else {
                 echo json_encode(['Error' => 'Parameters passed incorrectly']);
@@ -327,8 +333,8 @@ class FileClass
         $user = self::userAuthorization();
         if ($user) {
             $data = json_decode(file_get_contents("php://input"), true);
-            if (isset($data['id']) && !empty(trim($data['id'])) && isset($data['folder_name']) && !empty($data['folder_name'])) {
-                $fileId = htmlspecialchars(trim($data['id']));
+            if (isset($data['file_id']) && !empty(trim($data['file_id'])) && isset($data['folder_name']) && !empty($data['folder_name'])) {
+                $fileId = htmlspecialchars(trim($data['file_id']));
                 $newFileName = htmlspecialchars(trim($data['folder_name']));
                 global $connection;
                 $statement = $connection->prepare('SELECT folder_name FROM folders WHERE id =:id AND user_id = :user_id');
@@ -344,10 +350,10 @@ class FileClass
                         $statement->execute(['id' => $fileId, 'new_folder_name' => $newFileName, 'user_id' => $user['id']]);
 
                         try {
-                            if (rename($_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $fileName['folder_name'], $newFileName)) {
+                            if (rename($_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $fileName['folder_name'], $_SERVER['DOCUMENT_ROOT'] . '/files/' . $user['id'] . '/' . $newFileName)) {
                                 $connection->commit();
                                 http_response_code(200);
-                                echo json_encode(['Error' => 'Folder renamed success']);
+                                echo json_encode(['message' => 'Folder renamed success']);
                             } else {
                                 http_response_code(400);
                                 echo json_encode(['Error' => 'Folder is not renamed']);
@@ -504,8 +510,6 @@ class FileClass
                 $statement = $connection->prepare('SELECT email FROM users WHERE id =:id');
                 $statement->execute(['id' => $userId]);
                 $dataUserId = $statement->fetch(PDO::FETCH_ASSOC);
-
-                var_dump($userId);
                 if ($dataUserId) {
                     $statement = $connection->prepare('SELECT file_name FROM files WHERE id =:id');
                     $statement->execute(['id' => $fileId]);
